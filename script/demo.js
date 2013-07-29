@@ -2,7 +2,9 @@ Zepto(function($) {
 	// Create the code box
 	var codeNode = $('#code')[0];
 	if (codeNode) {
-		$.get('/script/push-relabel.js', function(data) {
+		$.get($(codeNode).data('code-url'), {
+			processData: false
+		}, function(data) {
 			var code = CodeMirror(codeNode, {
 				value: data,
 				mode: "javascript",

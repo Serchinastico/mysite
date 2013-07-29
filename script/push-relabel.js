@@ -77,9 +77,106 @@ function createWashingtonRlg(rows, columns, maxCapacity) {
  * @param {Object} graph
  * @author Sergio Gutiérrez <sergio.gutierrez.mota@gmail.com>
  */
-function drawWashingtonRlg(graph) {
-	var canvas = $('#visualization');
+function drawWashingtonRlg(graph, canvas) {
+	var canvasHeight = canvas.height(),
+		canvasWidth = canvas.width(),
+		margin = {
+			left: 20,
+			right: 20,
+			top: 20,
+			bottom: 20
+		},
+		nodeRadiusX = 10,
+		nodeRadiusY = 4;
 
-	var source = $('<svg><ellipse id="source" cx="50" cy="50" rx="50" ry="20" fill="#555" /></svg>');
+	var source = createSVGNode('ellipse', {
+		id: 'source',
+		cx: nodeRadiusX + margin.left,
+		cy: canvasHeight / 2,
+		rx: nodeRadiusX,
+		ry: nodeRadiusY,
+		fill: '#444'
+	});
 	canvas.append(source);
+
+	var sink = createSVGNode('ellipse', {
+		id: 'sink',
+		cx: canvasWidth - nodeRadiusX - margin.right,
+		cy: canvasHeight / 2, 
+		rx: nodeRadiusX,
+		ry: nodeRadiusY,
+		fill: '#444'
+	});
+	canvas.append(sink);
+
+	// Distance between columns
+	var xDistance = (canvasWidth - margin.left - margin.right) / (graph.columns + 1);
+	// Distance between rows
+	var yDistance = (canvasHeight - margin.top - margin.bottom) / graph.rows;
+
+	for (var column = 0; column < graph.columns; column++) {
+		for (var row = 0; row < graph.rows; row++) {
+			var index = 1 + row + (column * graph.rows);
+			var vertex = graph.vertices[index];
+
+			// Draw the outgoing edges
+			var fromX = Math.floor(margin.left + (column + 1) * xDistance),
+				fromY = Math.floor(margin.top + (row + 0.5) * yDistance),
+				edges = vertex.edges;
+			for (var i = 0, length = edges.length; i < length; i++) {
+				var edgeIndex = edges[i],
+					target = graph.edges[edgeIndex].target,
+					columnTarget = Math.floor(1 + (target - 1) / graph.rows),
+					rowTarget = (target - 1) % graph.rows,
+					edge = document.createElementNS("http://www.w3.org/2000/svg", 'path'),
+					toX = Math.floor(margin.left + columnTarget * xDistance),
+					toY = Math.floor(margin.top + (rowTarget + 0.5) * yDistance);
+				edge.setAttributeNS(null, 'd', 'M ' + fromX + ' ' + fromY + ' Q ' + fromX + ' ' + toY + ' ' + toX + ' ' + toY);
+				edge.setAttributeNS(null, 'stroke', '#DDD');
+				edge.setAttributeNS(null, 'fill', 'transparent');
+				canvas.append(edge);
+			}
+		}
+	}
+
+	for (var column = 0; column < graph.columns; column++) {
+		for (var row = 0; row < graph.rows; row++) {
+			var index = 1 + row + (column * graph.rows);
+			// Draw the vertex
+			var node = createSVGNode('ellipse', {
+				cx: margin.left + (column + 1) * xDistance,
+				cy: margin.top + (row + 0.5) * yDistance, 
+				rx: nodeRadiusX,
+				ry: nodeRadiusY,
+				fill: '#444'
+			});
+			canvas.append(node);
+		}
+	}
+}
+
+/**
+ * Creates a new SVG node from an Object.
+ *
+ * @param {String} name
+ * @param {Object} data
+ * @author Sergio Gutiérrez <sergio.gutierrez.mota@gmail.com>
+ */
+function createSVGNode(name, data) {
+	xmlns = "http://www.w3.org/2000/svg";
+	var node = document.createElementNS(xmlns, name);
+
+	for (attribute in data) {
+		if (data.hasOwnProperty(attribute)) {
+			node.setAttributeNS(null, attribute, data[attribute]);
+		}
+	}
+
+	return node;
+}
+
+function test() {
+	var graph = createWashingtonRlg(10, 10);
+	var canvas = $('#visualization');
+	drawWashingtonRlg(graph, canvas);
 }
