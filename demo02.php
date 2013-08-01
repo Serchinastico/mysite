@@ -1,5 +1,5 @@
 <div id="visualization">
-	<? for ($row = 0; $row < 5; $row++) { ?>
+	<? for ($row = 0; $row < 17; $row++) { ?>
 		<div id="clock-row-<?= sprintf('%1$0d', $row) ?>" class="clock-row"></div>
 	<? } ?>
 </div>

@@ -3,5 +3,10 @@
 }
 
 .clock-row {
-	height: 50px;
+	height: 40px;
+}
+
+#clock-hands {
+	position: absolute;
+	top: 131px;
 }
