@@ -1,16 +1,17 @@
 <?
-	$rows = 10;
-	$columns = 22;
+	$rows = 8;
+	$columns = 24;
+	$radius = 19;
 ?>
-<div id="visualization" data-rows="<?= $rows ?>" data-columns="<?= $columns ?>">
+<div id="visualization" data-rows="<?= $rows ?>" data-columns="<?= $columns ?>" data-radius="<?= $radius ?>">
 	<? for ($row = 0; $row < $rows; $row++) { ?>
 		<div id="clock-row-<?= sprintf('%1$0d', $row) ?>" class="clock-row"></div>
 	<? } ?>
 </div>
-<div id="code" data-code-url="/script/clocks.js"></div>
+<div id="code" data-code-url="/script/demo02/clocks.js"></div>
 
-<script src="script/demo.js"></script>
-<script src="script/clocks.js"></script>
-<script src="script/cm-javascript.js"></script>
+<script src="script/core/demo.js"></script>
+<script src="script/demo02/clocks.js"></script>
+<script src="script/external/cm-javascript.js"></script>
 <link rel="stylesheet" href="style/clocks.css">
 <link rel="stylesheet" href="style/mycodemirror.css">

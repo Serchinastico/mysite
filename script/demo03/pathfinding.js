@@ -34,7 +34,7 @@ function astar(graph, heuristic) {
 	while (!openSet.isEmpty()) {
 		var current = openSet.getNext();
 		if (current === goal) {
-			return cameFrom; // TODO Reconstruct solution with cameFrom list
+			return reconstructPath(cameFrom, goal);
 		}
 
 		closedSet[current] = true;
@@ -60,6 +60,18 @@ function astar(graph, heuristic) {
 	return false;
 }
 
+function reconstructPath(cameFrom, node) {
+	var path = node,
+		current = cameFrom[node];
+
+	while (typeof(current) !== 'undefined') {
+		path = current + ' -> ' + path;
+		current = cameFrom[current];
+	}
+
+	return path;
+}
+
 /**
 <------------------- GRAPH ----------------->
 */
@@ -69,7 +81,7 @@ function Graph() {
 			neighbors: [1, 2]
 		},
 		{
-			neighbors: [2, 3]
+			neighbors: [2]
 		},
 		{
 			neighbors: [3]
