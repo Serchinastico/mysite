@@ -1,16 +1,16 @@
+SOLUTIONS_COUNT = 7;
+VERTEX_RADIUS = 3;
+PATH_MIN_WIDTH = 1;
+PATH_MAX_WIDTH = 4;
+PATH_CURVE_RADIUS = 0.5;
+
 function play() {
 	var graph = new Graph(),
-		heuristic = new Heuristic();
+		heuristic = new Heuristic(graph);
 
-	setInterval(function() {
-		drawGraph(graph);
-		var solution = astar(graph, heuristic);
-		graph.update(solution);
-		drawSolution(graph, solution);
-		console.log(solution);
-	}, 100);
+	loop(graph, heuristic);
 
-	/*var canvas = document.getElementById('visualization'),
+	var canvas = document.getElementById('visualization'),
 		ctx = canvas.getContext("2d");
 	canvas.addEventListener('mousemove', function(evt) {
 		var rect = canvas.getBoundingClientRect(),
@@ -19,7 +19,21 @@ function play() {
 		ctx.font = '18pt Inconsolata';
 		ctx.fillStyle = '#000000';
 		ctx.fillText(message, 810, 700);
-	}, false);*/
+	}, false);
+}
+
+function loop(graph, heuristic) {
+	var solutions = new FixedLengthQueue(SOLUTIONS_COUNT);
+	setInterval(function() {
+		//drawGraph(graph);
+		var path = astar(graph, heuristic);
+		solutions.add({
+			path: path,
+			heat: 1.0
+		});
+		graph.update(path);
+		drawSolutions(graph, solutions);
+	}, 80);
 }
 
 function drawGraph(graph) {
@@ -40,7 +54,7 @@ function drawGraph(graph) {
 				nx = neighborPosition.x,
 				ny = neighborPosition.y;
 
-			ctx.strokeStyle = '#AAAAAA';
+			ctx.strokeStyle = '#00AAAA';
 			ctx.lineWidth = 3;
 			ctx.beginPath();
 			ctx.moveTo(x, y);
@@ -48,31 +62,78 @@ function drawGraph(graph) {
 			ctx.stroke();
 		}
 	});
-	drawVertex(graph);
+	drawVertices(graph);
 }
 
-function drawSolution(graph, solution) {
+function drawSolutions(graph, solutions) {
 	var canvas = document.getElementById('visualization'),
 		ctx = canvas.getContext("2d");
 
-	for (var i = 1, vertexCount = solution.length; i < vertexCount; i++) {
-		var from = solution[i - 1],
-			to = solution[i],
-			fromPosition = graph.getPosition(from),
-			toPosition = graph.getPosition(to);
+	solutions.each(function(i, solution) {
+		var path = solution.path,
+			heat = solution.heat,
+			heatAsChannel = Math.max(16, Math.floor(heat * 255)),
+			rChannel = heatAsChannel.toString(16),
+			gChannel = (0x10F - heatAsChannel).toString(16),
+			bChannel = (0x10F - heatAsChannel).toString(16),
+			color = '#' + rChannel + gChannel + bChannel,
+			width = heat * (PATH_MAX_WIDTH - PATH_MIN_WIDTH) + PATH_MIN_WIDTH,
+			pathFirstPosition = graph.getPosition(path[0]),
+			pathSecondPosition = graph.getPosition(path[1]),
+			firstToSecondVector = {
+				x: pathSecondPosition.x - pathFirstPosition.x,
+				y: pathSecondPosition.y - pathFirstPosition.y
+			};
 
-		ctx.strokeStyle = graph.getEdgeColor(from, to);
-		ctx.lineWidth = 3;
+		ctx.strokeStyle = color;
+		ctx.lineWidth = width;
 		ctx.beginPath();
-		ctx.moveTo(fromPosition.x, fromPosition.y);
-		ctx.lineTo(toPosition.x, toPosition.y);
+		ctx.moveTo(pathFirstPosition.x, pathFirstPosition.y);
+		ctx.lineTo(
+			pathFirstPosition.x + firstToSecondVector.x * PATH_CURVE_RADIUS,
+		 	pathFirstPosition.y + firstToSecondVector.y * PATH_CURVE_RADIUS
+		 );
 		ctx.stroke();
-	}
 
-	drawVertex(graph);
+		for (var i = 1, vertexCount = path.length; i < vertexCount; i++) {
+			var from = path[i - 1],
+				to = path[i],
+				next = path[i + 1] ? path[i + 1] : path[i],
+				fromPosition = graph.getPosition(from),
+				toPosition = graph.getPosition(to),
+				nextPosition = graph.getPosition(next),
+				fromToVector = {
+					x: toPosition.x - fromPosition.x,
+					y: toPosition.y - fromPosition.y
+				},
+				toNextVector = {
+					x: nextPosition.x - toPosition.x,
+					y: nextPosition.y - toPosition.y
+				},
+				start = {
+					x: fromPosition.x + PATH_CURVE_RADIUS * fromToVector.x,
+					y: fromPosition.y + PATH_CURVE_RADIUS * fromToVector.y
+				},
+				finish = {
+					x: toPosition.x + PATH_CURVE_RADIUS * toNextVector.x,
+					y: toPosition.y + PATH_CURVE_RADIUS * toNextVector.y
+				};
+
+			ctx.strokeStyle = color;
+			ctx.lineWidth = width;
+			ctx.beginPath();
+			ctx.moveTo(start.x, start.y);
+			ctx.quadraticCurveTo(toPosition.x, toPosition.y, finish.x, finish.y);
+			ctx.stroke();
+		}
+
+		solution.heat = Math.max(0, solution.heat - (1 / SOLUTIONS_COUNT));
+	});
+
+	//drawVertices(graph);
 }
 
-function drawVertex(graph) {
+function drawVertices(graph) {
 	var canvas = document.getElementById('visualization'),
 		ctx = canvas.getContext("2d");
 
@@ -82,13 +143,12 @@ function drawVertex(graph) {
 			x = position.x,
 			y = position.y,
 			neighbors = graph.getNeighbors(vertex),
-			heat = graph.getHeat(vertex),
-			color = Math.floor(heat).toString(16);
+			color = '#000000';
 
 		// Draw the node
 		ctx.fillStyle = '#' + color + '0000';
 		ctx.beginPath();
-		ctx.arc(x, y, 4, 0, 2 * Math.PI);
+		ctx.arc(x, y, VERTEX_RADIUS, 0, 2 * Math.PI);
 		ctx.fill();
 		ctx.closePath();
 
@@ -155,60 +215,50 @@ function reconstructPath(cameFrom, node) {
 */
 function Graph() {
 	this.neighbors = [
-		[1], [2, 17], [3, 47], [4, 48], [5, 48],
-		[6, 22], [7, 22], [8], [9], [10],
-		[11], [12, 52], [13, 53], [14], [15],
-		[16], [], [18, 23], [19], [20, 21, 32],
-		[21, 22], [5, 6, 22], [], [24], [25, 30],
-		[26, 33], [27], [28], [29, 40], [32, 34, 35],
-		[31, 32], [32, 33], [], [34], [35],
-		[36], [37, 43], [38, 46, 51], [39], [16],
-		[41, 49], [42, 44], [43], [], [45, 50],
-		[46], [50, 51], [], [], [],
-		[51], [], [53], []
+		/*  0  */ [1], [2, 17], [3, 47, 59], [48, 59, 62], [5, 48, 54, 65, 67],
+		/*  5  */ [6, 22, 66], [7, 22, 54], [8, 55], [9, 55], [10],
+		/* 10  */ [11], [12, 52], [13, 53], [14], [15],
+		/* 15  */ [16], [], [18, 23, 58], [19, 58, 61], [20, 21, 63, 69],
+		/* 20  */ [21, 22, 63, 64], [5, 6, 22, 66], [], [24], [25, 30],
+		/* 25  */ [26, 33], [27], [28], [29, 40, 78], [32, 34, 35, 73],
+		/* 30  */ [31, 32], [32, 33], [69], [34], [35],
+		/* 35  */ [70, 73, 77], [37, 43, 77], [38, 46, 51], [39], [16],
+		/* 40  */ [49, 79], [42, 44, 83], [43, 82], [81], [45, 50],
+		/* 45  */ [46], [50, 51], [], [], [],
+		/* 50  */ [51], [], [53], [], [67],
+		/* 55  */ [56], [], [58, 59], [], [],
+		/* 60  */ [61, 62], [63], [65], [], [65],
+		/* 65  */ [], [], [68], [], [],
+		/* 70  */ [71, 72], [], [], [74], [],
+		/* 75  */ [76, 77], [], [], [], [80, 83],
+		/* 80  */ [], [], [], [84, 85], [],
+		/* 85  */ [], [], [], [], [],
+		/* 90  */ [], [], [], [], [],
+		/* 95  */ [], [], [], [], [],
 	];
 
 	this.positions = [
-		{x: 796, y: 355}, {x: 760, y: 340}, {x: 750, y: 295}, {x: 700, y: 280}, {x: 610, y: 265}, 
-		{x: 580, y: 275}, {x: 550, y: 250}, {x: 490, y: 235}, {x: 470, y: 215}, {x: 460, y: 160}, 
-		{x: 460, y: 140}, {x: 370, y: 130}, {x: 250, y: 135}, {x: 250, y: 205}, {x: 250, y: 300}, 
-		{x: 270, y: 330}, {x: 320, y: 355}, {x: 735, y: 375}, {x: 685, y: 350}, {x: 645, y: 360}, 
-		{x: 620, y: 330}, {x: 575, y: 310}, {x: 535, y: 320}, {x: 765, y: 405}, {x: 750, y: 455}, 
-		{x: 735, y: 515}, {x: 720, y: 575}, {x: 685, y: 565}, {x: 645, y: 570}, {x: 640, y: 510}, 
-		{x: 710, y: 460}, {x: 675, y: 465}, {x: 645, y: 460}, {x: 675, y: 505}, {x: 660, y: 515}, 
-		{x: 565, y: 510}, {x: 475, y: 510}, {x: 275, y: 505}, {x: 275, y: 430}, {x: 260, y: 380}, 
-		{x: 640, y: 635}, {x: 425, y: 640}, {x: 425, y: 585}, {x: 470, y: 575}, {x: 250, y: 635}, 
-		{x: 245, y: 570}, {x: 255, y: 515}, {x: 770, y: 250}, {x: 665, y: 240}, {x: 665, y: 670}, 
-		{x: 225, y: 565}, {x: 220, y: 500}, {x: 345, y: 100}, {x: 265, y: 105}
+		/*  0  */ {x: 796, y: 355}, {x: 760, y: 340}, {x: 750, y: 295}, {x: 700, y: 280}, {x: 610, y: 265}, 
+		/*  5  */ {x: 580, y: 275}, {x: 550, y: 250}, {x: 490, y: 235}, {x: 470, y: 215}, {x: 460, y: 160}, 
+		/* 10  */ {x: 460, y: 140}, {x: 370, y: 130}, {x: 250, y: 135}, {x: 250, y: 205}, {x: 250, y: 300}, 
+		/* 15  */ {x: 270, y: 330}, {x: 320, y: 355}, {x: 735, y: 375}, {x: 685, y: 350}, {x: 645, y: 360}, 
+		/* 20  */ {x: 620, y: 330}, {x: 575, y: 310}, {x: 535, y: 320}, {x: 765, y: 405}, {x: 750, y: 455}, 
+		/* 25  */ {x: 735, y: 515}, {x: 720, y: 575}, {x: 685, y: 565}, {x: 645, y: 570}, {x: 640, y: 510}, 
+		/* 30  */ {x: 710, y: 460}, {x: 675, y: 465}, {x: 645, y: 460}, {x: 675, y: 505}, {x: 660, y: 515}, 
+		/* 35  */ {x: 565, y: 510}, {x: 475, y: 510}, {x: 275, y: 505}, {x: 275, y: 430}, {x: 260, y: 380}, 
+		/* 40  */ {x: 640, y: 635}, {x: 425, y: 640}, {x: 425, y: 585}, {x: 470, y: 575}, {x: 250, y: 635}, 
+		/* 45  */ {x: 245, y: 570}, {x: 255, y: 515}, {x: 770, y: 250}, {x: 665, y: 240}, {x: 665, y: 670}, 
+		/* 50  */ {x: 225, y: 565}, {x: 220, y: 500}, {x: 345, y: 100}, {x: 265, y: 105}, {x: 575, y: 240},
+		/* 55  */ {x: 450, y: 240}, {x: 420, y: 200}, {x: 718, y: 323}, {x: 710, y: 350}, {x: 722, y: 300},
+		/* 60  */ {x: 678, y: 311}, {x: 673, y: 335}, {x: 681, y: 281}, {x: 644, y: 330}, {x: 635, y: 305},
+		/* 65  */ {x: 640, y: 275}, {x: 598, y: 292}, {x: 603, y: 245}, {x: 610, y: 220}, {x: 640, y: 405},
+		/* 70  */ {x: 565, y: 450}, {x: 525, y: 440}, {x: 610, y: 440}, {x: 624, y: 525}, {x: 605, y: 550},
+		/* 75  */ {x: 548, y: 525}, {x: 560, y: 550}, {x: 527, y: 505}, {x: 605, y: 600}, {x: 545, y: 640},
+		/* 80  */ {x: 555, y: 595}, {x: 520, y: 570}, {x: 380, y: 565}, {x: 515, y: 635}, {x: 525, y: 615},
+		/* 85  */ {x: 505, y: 615},
 	];
 
-	this.heatMap = [
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1,
-		1, 1, 1, 1
-	];
-
-	this.edgeColors = [
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}, {},
-		{}, {}, {}, {}
-	];
+	this.heatMap = {};
 
 	this.start = 0;
 	this.goal = 16;
@@ -239,10 +289,6 @@ Graph.prototype.getNeighbors = function(vertex) {
 	return this.neighbors[vertex];
 }
 
-Graph.prototype.getHeat = function(vertex) {
-	return this.heatMap[vertex];
-}
-
 Graph.prototype.distanceBetween = function(from, to) {
 	var fromPosition = this.getPosition(from),
 		toPosition = this.getPosition(to),
@@ -253,7 +299,8 @@ Graph.prototype.distanceBetween = function(from, to) {
 		deltaX = toX - fromX,
 		deltaY = toY - fromY;
 
-	return Math.sqrt(deltaX * deltaX + deltaY * deltaY) * this.heatMap[to];
+	var heat = this.heatMap[from + '_' + to] || 1;
+	return Math.sqrt(deltaX * deltaX + deltaY * deltaY) * heat;
 }
 
 Graph.prototype.each = function(callback) {
@@ -266,45 +313,32 @@ Graph.prototype.getPosition = function(vertex) {
 	return this.positions[vertex];
 }
 
-Graph.prototype.getEdgeColor = function(from, to) {
-	return this.edgeColors[from][to];
-}
-
 Graph.prototype.update = function(solution) {
-	this.each(function(vertex) {
-		this.heatMap[vertex] = Math.max(0, this.heatMap[vertex] * 0.95);
-
-		var neighbors = this.getNeighbors(vertex);
-		for (var i = 0, neighborCount = neighbors.length; i < neighborCount; i++) {
-			var neighbor = neighbors[i];
-			if (!this.edgeColors[vertex][neighbor]) {
-				this.edgeColors[vertex][neighbor] = '#AAAAAA';
-			}
-			var color = parseInt(this.edgeColors[vertex][neighbor][1], 16);
-			color = Math.min(10, color + 1);
-			color = color.toString(16);
-			this.edgeColors[vertex][neighbor] = '#' + color + color + 'AA' + color + color;
+	// Adding some cold to the hotedges
+	for (var heat in this.heatMap) {
+		if (this.heatMap.hasOwnProperty(heat)) {
+			this.heatMap[heat] = Math.max(1, this.heatMap[heat] * 0.6);
 		}
-	}.bind(this));
+	}
 
 	for (var i = 1, vertexCount = solution.length; i < vertexCount; i++) {
 		var from = solution[i],
-			to = solution[i - 1];
-		this.heatMap[from] = Math.min(this.heatMap[from] * 1.15, 255);
-		this.edgeColors[from][to] = '#00AA00';
-		this.edgeColors[to][from] = '#00AA00';
+			to = solution[i - 1],
+			heatKey = to + '_' + from,
+			prevHeat = this.heatMap[heatKey] || 1;
+		this.heatMap[heatKey] = Math.min(prevHeat * 3, 255);
 	}
 }
 
 /**
 <------------------- HEURISTIC ----------------->
 */
-function Heuristic() {
-
+function Heuristic(graph) {
+	this.graph = graph;
 }
 
 Heuristic.prototype.estimate = function(from, to) {
-	return 1;
+	return this.graph.distanceBetween(from, to);
 }
 
 /**
@@ -315,6 +349,7 @@ function SortedList(element, weight) {
 	this.weights = [];
 	if (typeof(element) !== 'undefined') {
 		this.list.push(element);
+		this.weights.push(weight);
 	}
 
 	this.indexOf = function(weight, start, end) {
@@ -322,9 +357,16 @@ function SortedList(element, weight) {
 			end = end || this.list.length - 1,
 			pivot = parseInt(start + (end - start) / 2);
 
-		// Base case
-		if (end - start <= 1 || this.weights[pivot] === weight) {
+		// Base cases
+		if (start > end) {
+			// Empty list
 			return pivot;
+		} else if (start === end) {
+			// Unitary list
+			return (weight <= this.weights[pivot]) ? pivot : pivot + 1;
+		} else if (start === end - 1) {
+			// 2 elements list
+			return (weight <= this.weights[pivot]) ? pivot : this.indexOf(weight, pivot + 1, end);
 		}
 
 		// Recursive call
@@ -338,8 +380,8 @@ function SortedList(element, weight) {
 
 SortedList.prototype.insert = function(element, weight) {
 	var position = this.indexOf(weight);
-	this.list.splice(position + 1, 0, element);
-	this.weights.splice(position + 1, 0, weight);
+	this.list.splice(position, 0, element);
+	this.weights.splice(position, 0, weight);
 }
 
 SortedList.prototype.getNext = function() {
@@ -358,6 +400,24 @@ SortedList.prototype.exists = function(element) {
 
 SortedList.prototype.isEmpty = function() {
 	return this.list.length === 0;
+}
+
+function FixedLengthQueue(maxElements) {
+	this.maxElements = maxElements;
+	this.queue = [];
+}
+
+FixedLengthQueue.prototype.add = function(element) {
+	var length = this.queue.push(element);
+	if (length > this.maxElements) {
+		this.queue.shift();
+	}
+}
+
+FixedLengthQueue.prototype.each = function(callback) {
+	for (var i = 0, elementCount = this.queue.length; i < elementCount; i++) {
+		callback(i, this.queue[i]);
+	}
 }
 
 play();
