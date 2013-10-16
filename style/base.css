@@ -91,16 +91,19 @@ li a:hover {
 	width: 90%;
 	height: 100%;
 	background-color: #DDD;
+	overflow: hidden;
+	border: 1px solid #000;
 }
 
 .demo-prev {
-	width: 300px;
+	width: 281px;
 	height: 200px;
-	border: 1px solid #999;
+	margin: 0px 2px;
+	border: 1px solid #000;
 	cursor: pointer;
 	opacity: 1;
 	background-color: #666;
-
+	float: left;
 }
 
 .demo-prev-img {
@@ -117,6 +120,20 @@ li a:hover {
 	}
 
 #demo-prev-1 {
-	background-image: url('http://dp.la/info/wp-content/uploads/2013/05/bibs-300x200.png');
+	background-image: url('/img/demo-prev-01.png');
 	background-size: 100% 100%;
+}
+
+#demo-prev-2 {
+	background-image: url('/img/demo-prev-02.png');
+	background-size: 100% 100%;
+}
+
+#demo-prev-3 {
+	background-image: url('/img/demo-prev-03.png');
+	background-size: 100% 100%;
+}
+
+.flnone {
+	float: none;
 }

@@ -5,12 +5,13 @@
 			require sprintf('demo%1$02d.php', $demoNumber);
 		} else { ?>
 			<div id="demo-grid">
-				<? for ($demoNumber = 1; $demoNumber < 4; $demoNumber++) { ?>
+				<? for ($demoNumber = 1; $demoNumber < 5; $demoNumber++) { ?>
 				<div class="demo-prev">
 					<a id="demo-prev-<?= $demoNumber ?>" class="demo-prev-img" href="/demos?d=<?= $demoNumber ?>"></a>
 				</div>
 				<? } ?>
 			</div>
+			<div class="flnone"></div>
 		<? } ?> 
 	</div>
 <? require 'footer.php' ?>

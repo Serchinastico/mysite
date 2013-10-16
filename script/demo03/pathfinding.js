@@ -1,4 +1,4 @@
-SOLUTIONS_COUNT = 7;
+SOLUTIONS_COUNT = 10;
 VERTEX_RADIUS = 3;
 PATH_MIN_WIDTH = 1;
 PATH_MAX_WIDTH = 4;
@@ -8,13 +8,25 @@ function play() {
 	var graph = new Graph(),
 		heuristic = new Heuristic(graph);
 
-	loop(graph, heuristic);
-
 	var canvas = document.getElementById('visualization'),
 		ctx = canvas.getContext("2d");
-	canvas.addEventListener('mousemove', function(evt) {
+
+	canvas.addEventListener('click', function(event) {
+		var clickX = event.offsetX,
+			clickY = event.offsetY,
+			closestVertex = pickClosestVertex(graph, clickX, clickY);
+
+		if (typeof(graph.getStart()) === 'undefined') {
+			graph.setStart(closestVertex);
+		} else {
+			graph.setGoal(closestVertex);
+			loop(graph, heuristic);
+		}
+	});
+
+	canvas.addEventListener('mousemove', function(event) {
 		var rect = canvas.getBoundingClientRect(),
-			message = (evt.clientX - rect.left) + ' ' + (evt.clientY - rect.top);
+			message = (event.clientX - rect.left) + ' ' + (event.clientY - rect.top);
 		ctx.clearRect(810, 600, 200, 200);
 		ctx.font = '18pt Inconsolata';
 		ctx.fillStyle = '#000000';
@@ -22,25 +34,46 @@ function play() {
 	}, false);
 }
 
+function pickClosestVertex(graph, x, y) {
+	var closestVertex = null,
+		closestDistance = Infinity;
+
+	graph.each(function(vertex) {
+		var fromPosition = graph.getPosition(vertex),
+			fromX = fromPosition.x,
+			fromY = fromPosition.y,
+			deltaX = x - fromX,
+			deltaY = y - fromY,
+			distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+		if (distance < closestDistance) {
+			closestVertex = vertex;
+			closestDistance = distance;
+		}
+	});
+
+	return closestVertex;
+}
+
 function loop(graph, heuristic) {
-	var solutions = new FixedLengthQueue(SOLUTIONS_COUNT);
+	var solutions = new FixedLengthQueue(SOLUTIONS_COUNT),
+		canvas = document.getElementById('visualization'),
+		ctx = canvas.getContext("2d");
+
 	setInterval(function() {
-		//drawGraph(graph);
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		//drawGraph(graph, ctx);
 		var path = astar(graph, heuristic);
 		solutions.add({
 			path: path,
 			heat: 1.0
 		});
 		graph.update(path);
-		drawSolutions(graph, solutions);
+		drawSolutions(graph, solutions, ctx);
 	}, 80);
 }
 
-function drawGraph(graph) {
-	var canvas = document.getElementById('visualization'),
-		ctx = canvas.getContext("2d");
-
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
+function drawGraph(graph, ctx) {
 	graph.each(function(vertex) {
 		var position = graph.getPosition(vertex),
 			x = position.x,
@@ -62,13 +95,10 @@ function drawGraph(graph) {
 			ctx.stroke();
 		}
 	});
-	drawVertices(graph);
+	drawVertices(graph, ctx);
 }
 
-function drawSolutions(graph, solutions) {
-	var canvas = document.getElementById('visualization'),
-		ctx = canvas.getContext("2d");
-
+function drawSolutions(graph, solutions, ctx) {
 	solutions.each(function(i, solution) {
 		var path = solution.path,
 			heat = solution.heat,
@@ -129,14 +159,9 @@ function drawSolutions(graph, solutions) {
 
 		solution.heat = Math.max(0, solution.heat - (1 / SOLUTIONS_COUNT));
 	});
-
-	//drawVertices(graph);
 }
 
-function drawVertices(graph) {
-	var canvas = document.getElementById('visualization'),
-		ctx = canvas.getContext("2d");
-
+function drawVertices(graph, ctx) {
 	ctx.font = 'Bold 10pt Inconsolata';
 	graph.each(function(vertex) {
 		var position = graph.getPosition(vertex),
@@ -260,8 +285,6 @@ function Graph() {
 
 	this.heatMap = {};
 
-	this.start = 0;
-	this.goal = 16;
 	this.vertexCount = this.positions.length;
 
 	// Automatic non directed graph
@@ -275,6 +298,14 @@ function Graph() {
 			}
 		}
 	}
+}
+
+Graph.prototype.setStart = function(start) {
+	this.start = start;
+}
+
+Graph.prototype.setGoal = function(goal) {
+	this.goal = goal;
 }
 
 Graph.prototype.getStart = function() {

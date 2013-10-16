@@ -4,7 +4,6 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Sergio Gutiérrez</title>
 		<link rel="stylesheet" href="style/base.css" type="text/css" media="screen">
-		<script src="//cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/3.12.0/codemirror.min.js"></script>
 		<link href='http://fonts.googleapis.com/css?family=Expletus+Sans:400,700' rel='stylesheet' type='text/css'>
 		<link href='http://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
