@@ -1,3 +1,4 @@
+<? require 'src/TemplateUtils.php' ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en">
 	<head>
@@ -11,18 +12,20 @@
 	<body>
 		<div id="content">
 			<div id="header">
-				<a href="/">
-					<div id="logo">
-						<h1>Sergio Gutiérrez</h1>
-						<h2>Web and Game developer</h2>
-					</div>
+				<a id="logo" href="/">
+					<h1>SERGIO GUTIÉRREZ</h1>
+					<h2>{WEB & GAME DEVELOPER}</h2>
 				</a>
+			</div>
+			<div id="menu">
+				<div id="vertical-bar"></div>
 				<div id="sections">
 					<ul>
-					<li><a href="demos">Demos</a></li>
-					<li><a href="https://github.com/Serchinastico/">GitHub</a></li>
-					<li><a href="about">About</a></li>
+						<li><a href="/">HOME</a></li>
+						<li><a href="demos">DEMOS</a></li>
+						<li><a href="https://github.com/Serchinastico/">GITHUB</a></li>
+						<li><a href="http://www.linkedin.com/pub/sergio-guti%C3%A9rrez-mota/63/560/b8b">LINKEDIN</a></li>
+						<li><a href="http://www.linkedin.com/pub/sergio-guti%C3%A9rrez-mota/63/560/b8b">TWITTER</a></li>
 					</ul>
 				</div>
 			</div>
-			<div class="separator"></div>

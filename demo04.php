@@ -8,8 +8,10 @@
 
 <script src="script/core/demo.js"></script>
 <script src="script/demo04/runner.js"></script>
-<script data-main="script/demo04/Main.js" src="//ajax.googleapis.com/ajax/libs/mootools/1.4.5/mootools-yui-compressed.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/mootools/1.4.5/mootools-yui-compressed.js"></script>
 <script src="script/external/mootools-more.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.8/require.min.js"></script>
+<script src="script/demo04/core/Bootstrap.js"></script>
+<script src="script/demo04/core/Namespace.js"></script>
+<script src="script/demo04/game/Game.js"></script>
 <script src="script/external/cm-javascript.js"></script>
 <link rel="stylesheet" href="style/mycodemirror.css">
