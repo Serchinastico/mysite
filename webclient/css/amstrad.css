@@ -1,0 +1,24 @@
+body {
+	background-color: #000088;
+}
+
+.content {
+	margin: 0px auto;
+	width: 1200px;
+}
+
+@font-face {
+	font-family:"Amstrad CPC";
+	src: url("/font/amstrad_cpc464.eot?") format("eot"),
+		 url("/font/amstrad_cpc464.woff") format("woff"),
+		 url("/font/amstrad_cpc464.ttf") format("truetype"),
+		 url("/font/amstrad_cpc464.svg#Amstrad-CPC464") format("svg");
+	font-weight: normal;
+	font-style: normal;
+}
+
+.amstrad-cpc {
+	color: #FFFF00;
+	font-family: "Amstrad CPC", Monaco, monospace;
+	font-size: 30px;
+}
