@@ -13,7 +13,10 @@ window.onload = function() {
 	amstradConsole.print('READY\n');
 	amstradConsole.setShowCaret(true);
 	amstradConsole.sleep(1000);
-	amstradConsole.print('run"cv', 150);
+	amstradConsole.print('run"cv', {
+		sleepTimeBetweenLetters: 150,
+		sleepTimeBetweenLettersVariation: 300
+	});
 	amstradConsole.setShowCaret(false);
 	amstradConsole.sleep(1500);
 	amstradConsole.clear();
